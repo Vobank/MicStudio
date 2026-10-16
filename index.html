@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Студийный микрофон</title>
+<style>
+  :root{--bg:#0e0f13;--panel:#171922;--panel2:#1f2230;--line:#2b2f3d;--text:#e9eaf0;
+        --dim:#9aa1b2;--accent:#28d17c;--accent2:#2a7cff;--warn:#ff5c5c}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(1100px 500px at 70% -10%,#12241c,transparent),var(--bg);
+       color:var(--text);font-family:"Segoe UI",system-ui,Arial,sans-serif}
+  header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header .logo{font-weight:800;font-size:20px}
+  header .logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:18px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  select,button{padding:10px 12px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;font-family:inherit}
+  select{min-width:220px}
+  .btn{cursor:pointer;font-weight:700}
+  .btn.go{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#fff}
+  .btn.stop{background:var(--panel2);color:var(--warn);border-color:var(--warn)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#666;display:inline-block}
+  .dot.on{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  h3{margin:0 0 4px;font-size:15px}
+  .sub{color:var(--dim);font-size:12px;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .stage{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stage h4{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .ctl{margin:10px 0}
+  .ctl label{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:4px}
+  .ctl .val{color:var(--text);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .preset{cursor:pointer;padding:9px 14px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);color:var(--text);font-weight:600;font-size:13px}
+  .preset:hover{border-color:var(--accent)}
+  .meter{height:16px;border-radius:8px;background:#0a0b0f;border:1px solid var(--line);overflow:hidden;position:relative}
+  .meter>div{height:100%;width:0;background:linear-gradient(90deg,#28d17c 60%,#e6d24a 80%,#ff5c5c 100%);transition:width .08s}
+  .hint{color:var(--dim);font-size:12px}
+  .pill{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎙️ <span>Студийный микрофон</span></div>
+  <span class="pill">Rode NT1 · Scarlett 2i2</span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span class="dot" id="dot"></span><span id="stat" class="hint">выключен</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Устройства и запуск -->
+  <div class="card">
+    <div class="row">
+      <div><div class="sub">🎤 Микрофон (вход)</div><select id="input"></select></div>
+      <div><div class="sub">🔊 Выход (куда слать)</div><select id="output"></select></div>
+      <div style="align-self:flex-end;display:flex;gap:8px">
+        <button class="btn go" id="start">▶ Включить</button>
+        <button class="btn stop" id="stop">■ Выключить</button>
+      </div>
+    </div>
+    <div class="ctl" style="margin-top:14px">
+      <label><span>Уровень входа</span><span class="val" id="lvl">—</span></label>
+      <div class="meter"><div id="meter"></div></div>
+      <div class="hint" id="lvlhint" style="margin-top:6px">Говори обычным голосом — стрелка около −12 dB, пики не в красном.</div>
+    </div>
+    <div class="hint" id="routehint" style="margin-top:10px"></div>
+  </div>
+
+  <!-- Автонастройка -->
+  <div class="card">
+    <h3>🎯 Автонастройка под твой голос</h3>
+    <div class="sub">Программа послушает тебя 12 секунд и подстроит эквалайзер, шумодав и компрессор точно под твой голос, микрофон и комнату</div>
+    <button class="btn go" id="calib" style="max-width:340px">🎤 Настроить под меня</button>
+    <div class="hint" id="calibmsg" style="margin-top:10px;line-height:1.5"></div>
+  </div>
+
+  <!-- Пресеты -->
+  <div class="card">
+    <h3>🎚 Пресеты</h3>
+    <div class="sub">Быстрый старт — потом крути под себя</div>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <!-- Ползунки -->
+  <div class="card">
+    <h3>Тонкая настройка</h3>
+    <div class="sub">Меняется вживую, слышно сразу</div>
+    <div class="grid">
+      <div class="stage">
+        <h4>🚪 Шумодав (Gate)</h4>
+        <div class="ctl" data-p="gate_threshold" data-min="-70" data-max="-20" data-step="1" data-unit="dB"><label><span>Порог тишины</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="gate_ratio" data-min="1" data-max="10" data-step="0.5" data-unit="x"><label><span>Сила</span><span class="val"></span></label><input type="range"></div>
+      </div>
+      <div class="stage">
+        <h4>🎛 Эквалайзер</h4>
+        <div class="ctl" data-p="hpf" data-min="40" data-max="150" data-step="1" data-unit="Гц"><label><span>Обрезка низа (гул/поп)</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="low_gain" data-min="-6" data-max="6" data-step="0.5" data-unit="dB"><label><span>Низ / тело</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="mud_gain" data-min="-8" data-max="4" data-step="0.5" data-unit="dB"><label><span>Убрать «муть» (~300Гц)</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="pres_gain" data-min="-4" data-max="8" data-step="0.5" data-unit="dB"><label><span>Чёткость (присутствие)</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="air_gain" data-min="-4" data-max="8" data-step="0.5" data-unit="dB"><label><span>«Воздух» (верх)</span><span class="val"></span></label><input type="range"></div>
+      </div>
+      <div class="stage">
+        <h4>🗣 Де-эссер</h4>
+        <div class="ctl" data-p="deess_gain" data-min="-10" data-max="0" data-step="0.5" data-unit="dB"><label><span>Приручить «с/ш» (~7кГц)</span><span class="val"></span></label><input type="range"></div>
+      </div>
+      <div class="stage">
+        <h4>🔊 Компрессор + выход</h4>
+        <div class="ctl" data-p="comp_threshold" data-min="-40" data-max="0" data-step="1" data-unit="dB"><label><span>Порог сжатия</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="comp_ratio" data-min="1" data-max="10" data-step="0.5" data-unit=":1"><label><span>Степень сжатия</span><span class="val"></span></label><input type="range"></div>
+        <div class="ctl" data-p="out_gain" data-min="-6" data-max="18" data-step="0.5" data-unit="dB"><label><span>Громкость на выходе</span><span class="val"></span></label><input type="range"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), dot=$('#dot'), stat=$('#stat');
+let running=false;
+async function j(url,body){const o={headers:{'Content-Type':'application/json'}};if(body){o.method='POST';o.body=JSON.stringify(body);}const r=await fetch(url,o);return r.json();}
+
+// устройства
+async function loadDevices(){
+  const d=await j('/devices');
+  const insel=$('#input'), outsel=$('#output');
+  insel.innerHTML=''; outsel.innerHTML='';
+  d.inputs.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(n===d.suggest_in)o.selected=true;insel.appendChild(o);});
+  d.outputs.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(n===d.suggest_out)o.selected=true;outsel.appendChild(o);});
+  $('#routehint').innerHTML='🔌 Выход стоит на <b>CABLE Input</b> — в Discord/OBS/игре выбери микрофон <b>CABLE Output (VB-Audio Virtual Cable)</b>.<br>🎧 Чтобы слышать себя при настройке — временно выбери в «Выход» свои наушники.';
+}
+
+// ползунки
+const ctls={};
+document.querySelectorAll('.ctl[data-p]').forEach(c=>{
+  const p=c.dataset.p, inp=c.querySelector('input'), val=c.querySelector('.val');
+  inp.min=c.dataset.min; inp.max=c.dataset.max; inp.step=c.dataset.step;
+  ctls[p]={inp,val,unit:c.dataset.unit};
+  inp.oninput=()=>{val.textContent=(+inp.value)+' '+c.dataset.unit; j('/set',{param:p,value:+inp.value});};
+});
+function setParams(params){for(const p in params){if(ctls[p]){ctls[p].inp.value=params[p];ctls[p].val.textContent=(+params[p])+' '+ctls[p].unit;}}}
+
+// пресеты
+const PRESET_NAMES={nt1_broadcast:'🎙️ NT1 вещание',warm_podcast:'🔥 Тёплый подкаст',flat:'⚪ Нейтрально'};
+async function loadState(){
+  const s=await j('/state');
+  setParams(s.params);
+  const box=$('#presets'); box.innerHTML='';
+  s.presets.forEach(n=>{const b=document.createElement('button');b.className='preset';b.textContent=PRESET_NAMES[n]||n;
+    b.onclick=async()=>{const r=await j('/preset',{name:n});if(r.params)setParams(r.params);};box.appendChild(b);});
+  setStatus(s.status);
+}
+function setStatus(st){running=st.running;dot.classList.toggle('on',running);
+  stat.textContent=running?('в эфире → '+(st.output||'')):(st.error?('ошибка: '+st.error):'выключен');}
+
+// автонастройка под голос
+const calibBtn=$('#calib'), calibMsg=$('#calibmsg');
+calibBtn.onclick=async()=>{
+  calibBtn.disabled=true;
+  let n=12; const tick=()=>{calibMsg.textContent='🎤 Говори обычным голосом… '+n+' сек'; n--;};
+  tick(); const tm=setInterval(()=>{if(n<0){clearInterval(tm);calibMsg.textContent='🔎 Анализирую твой голос…';}else tick();},1000);
+  try{
+    const r=await j('/calibrate',{seconds:12});
+    clearInterval(tm); calibBtn.disabled=false;
+    if(r.ok){setParams(r.params); calibMsg.innerHTML='✅ <b>Настроено под тебя!</b><br><span style="color:var(--dim)">'+r.explain+'</span>';}
+    else calibMsg.textContent='⚠️ '+(r.error||'не получилось');
+  }catch(e){clearInterval(tm); calibBtn.disabled=false; calibMsg.textContent='Ошибка калибровки.';}
+};
+
+$('#start').onclick=async()=>{const r=await j('/start',{input:$('#input').value,output:$('#output').value});setStatus(r.status);};
+$('#stop').onclick=async()=>{const r=await j('/stop',{});setStatus(r.status);};
+
+// метр уровня
+setInterval(async()=>{
+  try{const l=await j('/levels');
+    const db=l.peak; const pct=Math.max(0,Math.min(100,(db+60)/60*100));
+    $('#meter').style.width=pct+'%';
+    $('#lvl').textContent=(db<=-90?'—':db.toFixed(0)+' dB');
+  }catch(e){}
+},120);
+
+loadDevices().then(loadState);
+</script>
+</body>
+</html>

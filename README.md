@@ -4,9 +4,9 @@
 
 > 🌐 **Язык интерфейса: только русский** · **Interface language: Russian only**
 
-Обработка микрофона в реальном времени (студийное звучание) — шумодав, эквалайзер, компрессор и другие эффекты, с выходом в виртуальный кабель для игр/стримов/созвонов.
+Обработка микрофона в реальном времени (студийное звучание) — шумовой гейт, эквалайзер, компрессор и другие эффекты, с выходом в виртуальный кабель для игр/стримов/созвонов.
 
-Real-time microphone processing (studio sound) — noise suppression, EQ, compressor and more, routed to a virtual cable for games/streams/calls.
+Real-time microphone processing (studio sound) — noise gate, EQ, compressor and more, routed to a virtual cable for games/streams/calls.
 
 ---
 
@@ -17,7 +17,7 @@ Real-time microphone processing (studio sound) — noise suppression, EQ, compre
 
 ### Возможности
 - 🎙 Real-time обработка (низкая задержка)
-- 🔇 Шумоподавление
+- 🔇 Шумовой гейт (глушит фон в паузах между словами; спектральный шумодав в `denoise.py` пока отключён)
 - 🎚 Эквалайзер, компрессор, эффекты (Pedalboard)
 - 🔌 Выход в VB-CABLE
 - 📟 Значок в трее
@@ -28,6 +28,7 @@ Real-time microphone processing (studio sound) — noise suppression, EQ, compre
 - Установленный VB-CABLE
 
 ### Запуск
+- `pip install -r requirements.txt`
 - `Студийный микрофон.bat`
 
 ---
@@ -39,7 +40,7 @@ Takes your mic input, processes it in real time, and outputs to a virtual audio 
 
 ### Features
 - 🎙 Real-time processing (low latency)
-- 🔇 Noise suppression
+- 🔇 Noise gate (mutes background between words; the spectral denoiser in `denoise.py` is currently disabled)
 - 🎚 EQ, compressor, effects (Pedalboard)
 - 🔌 Output to VB-CABLE
 - 📟 Tray icon
@@ -50,6 +51,7 @@ Takes your mic input, processes it in real time, and outputs to a virtual audio 
 - VB-CABLE installed
 
 ### Run
+- `pip install -r requirements.txt`
 - `Студийный микрофон.bat`
 
 ---

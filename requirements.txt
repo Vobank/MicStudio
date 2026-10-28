@@ -1,0 +1,7 @@
+pedalboard
+sounddevice
+soxr
+numpy
+flask
+pystray
+pillow
